@@ -29,7 +29,7 @@ cv::Mat task1(const char* file) {
 }
 
 // Takes an image matrix and isolates the 3 color channels, displaying each one in a window and saving them to output/filename_color.jpg
-void task2(cv::Mat image, const char* filename) {
+std::vector<cv::Mat> task2(cv::Mat image, const char* filename) {
 
     // Create 3-channel color images for each channel (BGR format)
     cv::Mat blue_image, green_image, red_image;
@@ -83,22 +83,63 @@ void task2(cv::Mat image, const char* filename) {
     cv::imwrite(std::string("output/") + filename + "_red.jpg", red_image);
     
     printf("Task 2 complete. Channel images saved to output folder.\n");
+    return {blue_image, green_image, red_image};
 }
 
+
+// Task 3: Display grayscale image of input image based on averaging the 3 color channels
+cv::Mat task3(cv::Mat image){
+    // Define height and width from input image
+    int height = image.rows;
+    int width = image.cols;
+    float average;
+    uchar grayscale_pixel;
+
+    // Create grayscale image (Basically 1D array)
+    cv::Mat gray;
+    gray = cv::Mat::zeros(height, width, CV_8UC1); // Init to zeroes
+
+    // Iterate through the image
+    for (int y = 0; y < height; y++) { // Rows first
+        for (int x = 0; x < width; x++) { // Columns then
+            // Get Pixel at image
+            cv::Vec3b pixel = image.at<cv::Vec3b>(y,x);
+            average = (pixel[0] + pixel[1] + pixel[2])/3.0f; // Compute average
+            grayscale_pixel = static_cast<uchar>(average); // Convert to proper type
+            // Store it in the grapspace image
+            gray.at<uchar>(y,x) = grayscale_pixel;
+        }
+    }
+
+    printf("Task 3 complete, please enter Q to exit");
+
+    // Create and display a window
+    cv::namedWindow("Grayscale", cv::WINDOW_AUTOSIZE);
+    cv::imshow("Grayscale", gray);
+    cv::waitKey(0);
+    cv::imwrite("output/grayscale.jpg", gray);
+
+    return gray;
+}
 
 
 int main(int argc, char** argv) {
     // Create Variable for Storing Image and Further Processing
     cv::Mat image;
+    cv::Mat grayscale;
+
 
     // Task 1 (Display Preset Image)
     image = task1("input/shed1-small.jpg");
     // End of Task 1
 
     //Task 2 (Isolate Color Channels)
-    task2(image, "shed1-small");
+    auto channels = task2(image, "shed1-small");
     // End of Task 2
 
+    // Task 3 (Compute grayscale based on average)
+    grayscale = task3(image);
+    // End of Task 3
     
     return 0;
 }
