@@ -122,12 +122,76 @@ cv::Mat task3(cv::Mat image){
     return gray;
 }
 
+// Task 4 (Get and display the histogram of an image)
+void task4(const cv::Mat& image, const std::string& name, const cv::Scalar& histColor){
+    int hist[256] = {0};
+    int height = image.rows;
+    int width = image.cols;
+
+    // Build histogram
+    for(int y = 0; y < height; y++) {
+        for(int x = 0; x < width; x++) {
+            int val = static_cast<int>(image.at<uchar>(y,x));
+            hist[val]++;
+        }
+    }
+
+    // Margins for axes and labels
+    int left_margin = 50;
+    int bottom_margin = 40;
+    int top_margin = 20;
+    int right_margin = 20;
+
+    // Create image for histogram (now 3-channel for color)
+    int hist_w = 512, hist_h = 400;
+    int canvas_w = hist_w + left_margin + right_margin;
+    int canvas_h = hist_h + top_margin + bottom_margin;
+    int bin_w = cvRound((double) hist_w / 256);
+    cv::Mat histImage(canvas_h, canvas_w, CV_8UC3, cv::Scalar(255,255,255));
+
+    // Normalize histogram
+    int max_val = *std::max_element(hist, hist + 256);
+    for(int i = 0; i < 256; i++) {
+        hist[i] = static_cast<int>(((double)hist[i] / max_val) * hist_h);
+    }
+
+    // Draw histogram (start at left_margin, leave space at bottom for x-axis)
+    for(int i = 1; i < 256; i++) {
+        cv::line(histImage,
+                 cv::Point(left_margin + bin_w * (i - 1), canvas_h - bottom_margin - hist[i - 1]),
+                 cv::Point(left_margin + bin_w * i, canvas_h - bottom_margin - hist[i]),
+                 histColor, 2, 8, 0);
+    }
+
+    // Draw y-axis (black)
+    cv::line(histImage, cv::Point(left_margin, canvas_h - bottom_margin), cv::Point(left_margin, top_margin), cv::Scalar(0,0,0), 2);
+    // Draw x-axis (black)
+    cv::line(histImage, cv::Point(left_margin, canvas_h - bottom_margin), cv::Point(canvas_w - right_margin, canvas_h - bottom_margin), cv::Scalar(0,0,0), 2);
+
+    // Add y-axis labels (0, max/2, max) in black
+    cv::putText(histImage, "0", cv::Point(5, canvas_h - bottom_margin), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1);
+    cv::putText(histImage, std::to_string(max_val/2), cv::Point(5, canvas_h - bottom_margin - hist_h/2), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1);
+    cv::putText(histImage, std::to_string(max_val), cv::Point(5, top_margin + 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1);
+
+    // Add x-axis labels (0, 128, 255) in black
+    cv::putText(histImage, "0", cv::Point(left_margin, canvas_h - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1);
+    cv::putText(histImage, "128", cv::Point(left_margin + hist_w/2 - 10, canvas_h - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1);
+    cv::putText(histImage, "255", cv::Point(left_margin + hist_w - 20, canvas_h - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1);
+
+    cv::imshow((name + " Histogram").c_str(), histImage);
+    cv::waitKey(0);
+}
+
+// Task 5: Perform Binary thresholding on the image
+void task5(const cv::Mat& image) {
+    
+}
+
 
 int main(int argc, char** argv) {
     // Create Variable for Storing Image and Further Processing
     cv::Mat image;
     cv::Mat grayscale;
-
 
     // Task 1 (Display Preset Image)
     image = task1("input/shed1-small.jpg");
@@ -140,6 +204,24 @@ int main(int argc, char** argv) {
     // Task 3 (Compute grayscale based on average)
     grayscale = task3(image);
     // End of Task 3
-    
+
+    // Task 4 (Histograms)
+    std::vector<cv::Mat> blue_planes, green_planes, red_planes;
+    cv::split(channels[0], blue_planes);   // blue_planes[0] is the blue channel
+    cv::split(channels[1], green_planes);  // green_planes[1] is the green channel
+    cv::split(channels[2], red_planes);    // red_planes[2] is the red channel
+
+    // Now pass the single channel to task4:
+    task4(blue_planes[0], "Blue", cv::Scalar(255,0,0));
+    task4(green_planes[1], "Green", cv::Scalar(0,255,0));
+    task4(red_planes[2], "Red", cv::Scalar(0,0,255));
+    task4(grayscale, "Gray", cv::Scalar(0,0,0));
+    // End of Task 4
+
+    // Task 5 (Binary thresholding)
+
+
+    // End of Task 5
+
     return 0;
 }
