@@ -184,7 +184,109 @@ void task4(const cv::Mat& image, const std::string& name, const cv::Scalar& hist
 
 // Task 5: Perform Binary thresholding on the image
 void task5(const cv::Mat& image) {
+    // Declare a variable
+    cv::Mat thresholded;
     
+    // Get height and width
+    int height = image.rows;
+    int width = image.cols;
+    int value;
+
+    // Get user input
+    std::cout<<"Enter the threshold (Task5) (between 0 and 255): ";
+    std::cin>>value;
+
+    thresholded = cv::Mat::zeros(height, width, CV_8UC1); // Init to zeroes
+
+    // Threshold image
+    for(int y = 0; y < height; y++) {
+        for(int x = 0; x < width; x++) {
+            if(static_cast<int>(image.at<uchar>(y,x)) < value) {
+                thresholded.at<uchar>(y,x) = 0;
+            }
+            else {
+                thresholded.at<uchar>(y,x) = image.at<uchar>(y,x);
+            }
+        }
+    }
+
+    // Display image
+    // Create and display a window
+    cv::namedWindow("Thresholded", cv::WINDOW_AUTOSIZE);
+    cv::imshow("thresholded", thresholded);
+    cv::waitKey(0);
+    cv::imwrite("output/thresholded.jpg", thresholded);
+
+    
+}
+
+void task6(const cv::Mat& image) {
+    int height = image.rows;
+    int width = image.cols;
+    int value;
+
+    std::cout << "Enter Threshold Value(0-255): " << "\n";
+    std::cin >> value;
+
+    // Use int for gradients to avoid overflow/underflow
+    cv::Mat gx = cv::Mat::zeros(height, width, CV_32S);
+    cv::Mat gy = cv::Mat::zeros(height, width, CV_32S);
+    cv::Mat gm = cv::Mat::zeros(height, width, CV_32F);
+    cv::Mat edge = cv::Mat::zeros(height, width, CV_8UC1);
+
+    for(int y = 0; y < height; y++) {
+        for(int x = 0; x < width; x++) {
+            int cur = static_cast<int>(image.at<uchar>(y, x));
+            int nextX = (x < width - 1) ? static_cast<int>(image.at<uchar>(y, x + 1)) : cur;
+            int nextY = (y < height - 1) ? static_cast<int>(image.at<uchar>(y + 1, x)) : cur;
+
+            gx.at<int>(y, x) = nextX - cur;
+            gy.at<int>(y, x) = nextY - cur;
+
+            float mag = std::sqrt(
+                static_cast<float>(gx.at<int>(y, x) * gx.at<int>(y, x) +
+                                   gy.at<int>(y, x) * gy.at<int>(y, x))
+            );
+            gm.at<float>(y, x) = mag;
+
+            // Threshold to create edge image
+            edge.at<uchar>(y, x) = (mag > value) ? 255 : 0;
+        }
+    }
+
+    cv::namedWindow("Edge", cv::WINDOW_AUTOSIZE);
+    cv::imshow("Edge", edge);
+    cv::waitKey(0);
+    cv::imwrite("output/edge.jpg", edge);
+}
+
+
+cv::Mat task7(const cv::Mat& image) {
+    int height = image.rows;
+    int width = image.cols;
+
+    int heightNew = height / 2;
+    int widthNew = width / 2;
+
+    cv::Mat pyramid = cv::Mat::zeros(heightNew, widthNew, CV_8UC1);
+
+    for(int y = 0; y < heightNew; y++) {
+        for(int x = 0; x < widthNew; x++) {
+            int cur    = static_cast<int>(image.at<uchar>(2*y,   2*x));
+            int nextX  = static_cast<int>(image.at<uchar>(2*y,   2*x+1));
+            int nextY  = static_cast<int>(image.at<uchar>(2*y+1, 2*x));
+            int nextXY = static_cast<int>(image.at<uchar>(2*y+1, 2*x+1));
+            int average = static_cast<int>((cur + nextX + nextY + nextXY) / 4.0f);
+            pyramid.at<uchar>(y, x) = static_cast<uchar>(average);
+        }
+    }
+
+    // Optional: Display or save the result
+    cv::imshow("Pyramid", pyramid);
+    cv::waitKey(0);
+    cv::imwrite("output/pyramid.jpg", pyramid);
+
+    return pyramid;
 }
 
 
@@ -219,9 +321,18 @@ int main(int argc, char** argv) {
     // End of Task 4
 
     // Task 5 (Binary thresholding)
-
-
+    task5(grayscale);
     // End of Task 5
+
+    // Task 6 (Edge Finding)
+    task6(grayscale);
+    // End of Task 6
+
+    // Task 7 (Pyramid Downsampling)
+    auto ag2 = task7(grayscale);
+    auto ag4 = task7(ag2);
+    auto ag8 = task7(ag4);
+    // End of Task 7
 
     return 0;
 }
