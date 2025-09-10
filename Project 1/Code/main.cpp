@@ -122,7 +122,6 @@ cv::Mat task3(cv::Mat image){
     return gray;
 }
 
-// Task 4 (Get and display the histogram of an image)
 void task4(const cv::Mat& image, const std::string& name, const cv::Scalar& histColor){
     int hist[256] = {0};
     int height = image.rows;
@@ -142,7 +141,6 @@ void task4(const cv::Mat& image, const std::string& name, const cv::Scalar& hist
     int top_margin = 20;
     int right_margin = 20;
 
-    // Create image for histogram (now 3-channel for color)
     int hist_w = 512, hist_h = 400;
     int canvas_w = hist_w + left_margin + right_margin;
     int canvas_h = hist_h + top_margin + bottom_margin;
@@ -151,11 +149,12 @@ void task4(const cv::Mat& image, const std::string& name, const cv::Scalar& hist
 
     // Normalize histogram
     int max_val = *std::max_element(hist, hist + 256);
+    if (max_val == 0) max_val = 1; // Prevent division by zero
     for(int i = 0; i < 256; i++) {
         hist[i] = static_cast<int>(((double)hist[i] / max_val) * hist_h);
     }
 
-    // Draw histogram (start at left_margin, leave space at bottom for x-axis)
+    // Draw histogram
     for(int i = 1; i < 256; i++) {
         cv::line(histImage,
                  cv::Point(left_margin + bin_w * (i - 1), canvas_h - bottom_margin - hist[i - 1]),
@@ -163,22 +162,20 @@ void task4(const cv::Mat& image, const std::string& name, const cv::Scalar& hist
                  histColor, 2, 8, 0);
     }
 
-    // Draw y-axis (black)
+    // Draw axes and labels (unchanged)
     cv::line(histImage, cv::Point(left_margin, canvas_h - bottom_margin), cv::Point(left_margin, top_margin), cv::Scalar(0,0,0), 2);
-    // Draw x-axis (black)
     cv::line(histImage, cv::Point(left_margin, canvas_h - bottom_margin), cv::Point(canvas_w - right_margin, canvas_h - bottom_margin), cv::Scalar(0,0,0), 2);
 
-    // Add y-axis labels (0, max/2, max) in black
     cv::putText(histImage, "0", cv::Point(5, canvas_h - bottom_margin), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1);
     cv::putText(histImage, std::to_string(max_val/2), cv::Point(5, canvas_h - bottom_margin - hist_h/2), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1);
     cv::putText(histImage, std::to_string(max_val), cv::Point(5, top_margin + 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1);
 
-    // Add x-axis labels (0, 128, 255) in black
     cv::putText(histImage, "0", cv::Point(left_margin, canvas_h - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1);
     cv::putText(histImage, "128", cv::Point(left_margin + hist_w/2 - 10, canvas_h - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1);
     cv::putText(histImage, "255", cv::Point(left_margin + hist_w - 20, canvas_h - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,0), 1);
 
     cv::imshow((name + " Histogram").c_str(), histImage);
+    cv::imwrite("output/" + name + "_histogram.jpg", histImage);
     cv::waitKey(0);
 }
 
